@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide Transition with GIF & Sound</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            overflow: hidden;
+        }
+
+        /* Loading screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        /* Spinner Image */
+        #spinner {
+            width: 100px;
+            height: 100px;
+            background-image: url('spinner.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            display: none;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .slide.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .gif-container {
+            position: absolute;
+            bottom: 10%;
+            left: -250px;
+            width: 250px;
+            height: auto;
+            display: none;
+            background: none !important;
+        }
+
+        @keyframes moveGif {
+            0% { left: -250px; opacity: 1; }
+            100% { left: 100vw; opacity: 1; }
+        }
+
+        .gif-moving {
+            animation: moveGif var(--speed) linear forwards;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div id="spinner"></div>
+        <div class="loading-text">Loading <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
+    </div>
+
+    <div class="presentation-container">
+        <div class="slide show" id="slide-1"><img src="Slide-1.png" alt="Slide 1"></div>
+        <div class="slide" id="slide-2"><img src="Slide-2.png" alt="Slide 2"></div>
+        <div class="slide" id="slide-3"><img src="Slide-3.png" alt="Slide 3"></div>
+        <div class="slide" id="slide-4"><img src="Slide-4.png" alt="Slide 4"></div>
+        <div class="slide" id="slide-5"><img src="Slide-5.png" alt="Slide 5"></div>
+        <div class="slide" id="slide-6"><img src="Slide-6.png" alt="Slide 6"></div>
+        <div class="slide" id="slide-7"><img src="Slide-7.png" alt="Slide 7"></div>
+        <div class="slide" id="slide-8"><img src="Slide-8.png" alt="Slide 8"></div>
+
+        <!-- GIF Transition -->
+        <img src="transition-gif.gif" id="transition-gif" class="gif-container">
+    </div>
+
+    <!-- Audio -->
+    <audio id="loading-audio" src="Loading-audio.mp3" preload="auto"></audio>
+    <audio id="transition-audio" src="transition.mp3" preload="auto"></audio>
+    <audio id="special-audio" src="Audio.mp3" preload="auto"></audio>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 8;
+        let transitionInProgress = false;
+        let isFirstInteraction = true;
+        let transitionSpeed = 3;
+        let loadingAudio = document.getElementById('loading-audio');
+        let transitionAudio = document.getElementById('transition-audio');
+        let specialAudio = document.getElementById('special-audio');
+
+        document.documentElement.style.setProperty('--speed', transitionSpeed + 's');
+
+        document.body.addEventListener('click', () => {
+            if (isFirstInteraction) {
+                loadingAudio.play();
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    showSlide(1);
+                    isFirstInteraction = false;
+                }, 11000);
+            } else {
+                changeSlide('next');
+            }
+        });
+
+        function showSlide(newSlide) {
+            document.querySelectorAll(".slide").forEach(slide => slide.classList.remove("show"));
+            document.getElementById('slide-' + newSlide).classList.add("show");
+            currentSlide = newSlide;
+        }
+
+        function playTransitionEffect(nextSlide) {
+            if (transitionInProgress) return;
+            transitionInProgress = true;
+
+            let gif = document.getElementById("transition-gif");
+
+            // Check if going from slide 7 to 8
+            if (currentSlide === 7 && nextSlide === 8) {
+                transitionAudio.pause();
+                transitionAudio.currentTime = 0;
+                specialAudio.currentTime = 0;
+                specialAudio.play();
+            } else {
+                gif.style.display = "block";
+                gif.classList.add("gif-moving");
+                transitionAudio.play();
+
+                setTimeout(() => {
+                    transitionAudio.pause();
+                    transitionAudio.currentTime = 0;
+                }, 3000);
+            }
+
+            setTimeout(() => {
+                gif.style.display = "none";
+                gif.classList.remove("gif-moving");
+                showSlide(nextSlide);
+                transitionInProgress = false;
+            }, 3000);
+        }
+
+        function changeSlide(direction) {
+            let newSlide = currentSlide;
+
+            if (direction === 'next') {
+                newSlide++;
+                if (newSlide > totalSlides) newSlide = 1;
+            } else if (direction === 'prev') {
+                newSlide--;
+                if (newSlide < 1) newSlide = totalSlides;
+            }
+
+            // Stop special audio if leaving slide 8
+            if (currentSlide === 8) {
+                specialAudio.pause();
+                specialAudio.currentTime = 0;
+            }
+
+            playTransitionEffect(newSlide);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === ' ' || event.key === 'ArrowRight') {
+                changeSlide('next');
+            } else if (event.key === 'ArrowLeft') {
+                changeSlide('prev');
+            }
+        });
+
+        showSlide(1);
+    </script>
+
+</body>
+</html>
